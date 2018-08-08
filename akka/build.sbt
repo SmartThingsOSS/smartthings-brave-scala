@@ -1,0 +1,1 @@
+name := "smartthings-brave-akka"
