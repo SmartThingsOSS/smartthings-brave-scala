@@ -1,6 +1,6 @@
 package smartthings.brave.scala.akka.http.internal
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.stream.scaladsl.{BidiFlow, Flow, Keep}
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
@@ -15,13 +15,13 @@ import scala.util.{Failure, Success}
 object TracedFlow {
 
   def apply(flow: Flow[HttpRequest, HttpResponse, Any],
-            httpTracing: HttpTracing, handler: HttpServerHandler[HttpRequest, HttpResponse],
+            httpTracing: HttpTracing, handler: HttpServerHandler[HttpRequest, (HttpRequest, HttpResponse)],
             extractor: Extractor[HttpRequest]): Flow[HttpRequest, HttpResponse, Any] = {
     BidiFlow.fromGraph(wrap(httpTracing, handler, extractor)).join(flow)
   }
 
   private def wrap(httpTracing: HttpTracing,
-                   handler: HttpServerHandler[HttpRequest, HttpResponse],
+                   handler: HttpServerHandler[HttpRequest, (HttpRequest, HttpResponse)],
                    extractor: Extractor[HttpRequest]) =
     new GraphStage[BidiShape[HttpRequest, HttpRequest, HttpResponse, HttpResponse]] {
 
@@ -34,11 +34,12 @@ object TracedFlow {
 
       private var currentSpan: Option[Span] = None
       private var spanInScope: Option[SpanInScope] = None
+      private var capturedRequest: Option[HttpRequest] = None
 
       setHandler(requestIn, new InHandler {
         override def onPush(): Unit = {
           val request = grab(requestIn)
-          setContext(handler.handleReceive(extractor, request))
+          setContext(request, handler.handleReceive(extractor, request))
           push(requestOut, request)
         }
 
@@ -60,28 +61,31 @@ object TracedFlow {
         override def onPush(): Unit = {
           val response = currentSpan.map { span =>
             span.annotate("response-ready")
+
+            val cRequest = capturedRequest.orNull
             val response = grab(responseIn)
 
             if (!response.entity.isKnownEmpty()) {
               response.transformEntityDataBytes(Flow[ByteString]
                 .watchTermination()(Keep.right)
-                  .mapMaterializedValue { f =>
-                    f.andThen {
+                  .mapMaterializedValue {
+                    _.andThen {
                       case Success(_) =>
-                        if (response.status.isFailure()) {
-                          // TODO brave requires an exception for error tagging.  Is there a better way?
-                          handler.handleSend(response, new Exception(response.status.reason()), span)
+                        if (response.status == StatusCodes.BadRequest) {
+                          handler.handleSend((cRequest, response), new Exception(response.status.reason()), span)
+                        }
+                        else if (response.status.isFailure()) {
+                          handler.handleSend((cRequest, response), new Exception(response.status.reason()), span)
                         } else {
-                          handler.handleSend(response, null, span)
+                          handler.handleSend((cRequest, response), null, span)
                         }
 
-                      case Failure(exception) =>
-                        handler.handleSend(response, exception, span)
+                      case Failure(exception) => handler.handleSend((cRequest, response), exception, span)
                     }(materializer.executionContext)
                   }
               )
             } else {
-              handler.handleSend(response, null, span)
+              handler.handleSend((cRequest, response), null, span)
               response
             }
 
@@ -98,7 +102,7 @@ object TracedFlow {
         override def onUpstreamFailure(ex: Throwable): Unit = {
           val response = grab(responseIn)
           currentSpan.foreach { span =>
-            handler.handleSend(response, ex, span)
+            handler.handleSend((capturedRequest.orNull, response), ex, span)
           }
           clearContext()
           completeStage()
@@ -117,15 +121,17 @@ object TracedFlow {
         }
       })
 
-      private def setContext(span: Span): Unit = {
-        spanInScope.foreach { ws => ws.close() }
+      private def setContext(request: HttpRequest, span: Span): Unit = {
+        spanInScope.foreach { _.close() }
         spanInScope = Some(httpTracing.tracing().tracer().withSpanInScope(span))
         currentSpan = Some(span)
+        capturedRequest = Some(request)
       }
 
       private def clearContext(): Unit = {
         clearSpanContext()
         currentSpan = None
+        capturedRequest = None
       }
 
       private def clearSpanContext(): Unit = {

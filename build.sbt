@@ -2,9 +2,9 @@
 
 val common = Seq(
   organization := "com.smartthings.brave.scala",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   libraryDependencies ++= Seq(
-    "io.zipkin.brave" % "brave" % "5.1.5",
+    "io.zipkin.brave" % "brave" % "5.5.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % Test
   )
 )
@@ -37,7 +37,7 @@ lazy val akka = project.in(file("akka"))
   .settings(
     name := "smartthings-brave-scala-akka",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-stream" % "2.5.14"
+      "com.typesafe.akka" %% "akka-stream" % "2.5.17"
     )
   )
   .dependsOn(core, config)
@@ -47,8 +47,9 @@ lazy val akkaHttp = project.in(file("akka-http"))
   .settings(
     name := "smartthings-brave-scala-akka-http",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % "10.1.3",
-      "io.zipkin.brave" % "brave-instrumentation-http" % "5.1.5"
+      "com.typesafe.akka" %% "akka-http" % "10.1.4",
+      "io.zipkin.brave" % "brave-instrumentation-http" % "5.5.0",
+      "io.zipkin.brave" % "brave-instrumentation-http-tests" % "5.5.0" % Test
     )
   )
   .dependsOn(core, akka)
