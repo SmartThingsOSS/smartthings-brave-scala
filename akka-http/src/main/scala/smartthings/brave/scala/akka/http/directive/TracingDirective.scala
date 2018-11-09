@@ -1,7 +1,8 @@
 package smartthings.brave.scala.akka.http.directive
 
 import akka.http.scaladsl.server.directives.BasicDirectives.extractActorSystem
-import akka.http.scaladsl.server.{Directive, Directive1}
+import akka.http.scaladsl.server.directives.BasicDirectives.extractRequest
+import akka.http.scaladsl.server.{Directive, Directive0, Directive1}
 import brave.Tracer.SpanInScope
 import brave.{Span, SpanCustomizer, Tracer}
 import smartthings.brave.scala.akka.http.extension.AkkaHttpTracingExtension
@@ -11,8 +12,14 @@ object TracingDirective extends TracingDirective
 
 trait TracingDirective {
 
-  def nextSpanInScope: Directive[(Span, SpanInScope)] = extractTracer.tmap { tracer =>
-    val span = tracer._1.nextSpan()
+  def tracingRouteName(route: String): Directive0 = (extractRequest & extractSpanCustomizer).tmap {
+    case (request, customizer) =>
+      customizer.name(s"${request.method.value.toLowerCase()} $route")
+      ()
+  }
+
+  def tracingNextSpanInScope(name: String): Directive[(Span, SpanInScope)] = extractTracer.tmap { tracer =>
+    val span = tracer._1.nextSpan().name(name).start()
     val ws = tracer._1.withSpanInScope(span)
     (span, ws)
   }

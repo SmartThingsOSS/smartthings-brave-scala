@@ -43,7 +43,9 @@ class TracedHttpExt(httpExt: HttpExt, httpTracing: HttpTracing) {
   private val serverHandler = HttpServerHandler.create(httpTracing, new AkkaHttpServerAdapter)
 
   private val extractor: Extractor[HttpRequest] = httpTracing.tracing().propagation().extractor {
-    (r: HttpRequest, name: String) => r.headers.find(_.lowercaseName() == name).map(_.value()).orNull
+    (r: HttpRequest, name: String) => {
+      r.headers.find(_.lowercaseName() == name.toLowerCase).map(_.value()).orNull
+    }
   }
 
   def singleRequestWithTracing(request: HttpRequest): Future[HttpResponse] =

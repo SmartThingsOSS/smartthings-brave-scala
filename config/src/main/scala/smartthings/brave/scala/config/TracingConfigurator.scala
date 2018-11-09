@@ -32,12 +32,15 @@ object TracingConfigurator extends TracingConfigurator {
 
   private def builder(config: Config): Tracing.Builder = {
     val localServiceName = Try(config.getString("local-service-name")).getOrElse("unknown")
+    val localIp = Try(config.getString("local-ip")).getOrElse(Platform.get().linkLocalIp())
+    val localPort = Try(config.getInt("local-port")).getOrElse(0)
     Tracing.newBuilder()
       .clock(Configurator(config, "clock", _ => Platform.get().clock()))
       .currentTraceContext(CurrentTraceContext.Default.create())
-      .endpoint(Configurator(config, "endpoint", _ => Platform.get().endpoint().toBuilder.serviceName(localServiceName).build()))
       .supportsJoin(Try(config.getBoolean("supports-join")).getOrElse(true))
       .localServiceName(localServiceName)
+      .localIp(localIp)
+      .localPort(localPort)
       .traceId128Bit(Try(config.getBoolean("trace-id-128-bit")).getOrElse(false))
       .sampler(Configurator(config, "sampler", _ => Sampler.ALWAYS_SAMPLE))
       .spanReporter(Configurator(config, "span-reporter", _ => Reporter.CONSOLE))
