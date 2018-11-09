@@ -12,6 +12,7 @@ import brave.test.http.ITHttpServer
 import okhttp3.Request
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.{After, Before, Test}
+import org.scalatest.junit.JUnitSuiteLike
 import smartthings.brave.scala.akka.http.TracedHttpExt.Instances._
 import smartthings.brave.scala.akka.http.directive.TracingDirective._
 import smartthings.brave.scala.akka.http.extension.AkkaHttpTracingExtension
@@ -21,7 +22,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class ITAkkaHttpServer extends ITHttpServer {
+class ITAkkaHttpServer extends ITHttpServer with JUnitSuiteLike {
 
   private val route: Route = {
     (pathEndOrSingleSlash & method(HttpMethods.OPTIONS)) {

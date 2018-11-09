@@ -12,6 +12,14 @@ import scala.util.{Failure, Success}
 
 object TracedFuture {
 
+  private[brave] object singleThreadExecutor extends ExecutionContext {
+    override def execute(runnable: Runnable): Unit = runnable.run()
+
+    override def reportFailure(t: Throwable): Unit = {
+      throw new IllegalStateException("exception in sameThreadExecutionContext", t)
+    }
+  }
+
   /**
     * Object to encapsulate some mutable state.  The objective here is to have a closable
     * object that we can call in both the success and failure cases without putting the
@@ -20,7 +28,7 @@ object TracedFuture {
     * @param value
     * @param tracer
     */
-  private [this] class FutureSpanInScope(value: Span, tracer: Tracer) extends Closeable {
+  private [brave] class FutureSpanInScope(value: Span, tracer: Tracer) extends Closeable {
 
     private var ws: SpanInScope = _
 
@@ -40,7 +48,7 @@ object TracedFuture {
     val futureInScope = new FutureSpanInScope(span, tracer)
     Future {
       body(futureInScope.markInScope())
-    }(executor).andThen {
+    }(singleThreadExecutor).andThen {
       case Success(_) => futureInScope.close()
       case Failure(exception) =>
         span.tag("error", exception.getLocalizedMessage)
@@ -54,11 +62,12 @@ object TracedFuture {
     val futureInScope = new FutureSpanInScope(span, tracer)
     Future {
       body(futureInScope.markInScope())
-    }(executor).andThen {
+    }(singleThreadExecutor).andThen {
       case Success(_) => futureInScope.close()
       case Failure(exception) =>
         span.tag("error", exception.getLocalizedMessage)
         futureInScope.close()
     }
   }
+
 }
