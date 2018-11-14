@@ -14,7 +14,7 @@ class SQSSpanReporterConfiguratorSpec extends FunSpec with Matchers {
     it("should fail when a queue url is not specified") {
       val config = ConfigFactory.load()
 
-      val reporter = Try(Configurator[AsyncReporter[Span]](config.getConfig("brave.tracing"), "sqs-span-reporter", _ => null))
+      val reporter = Try(Configurator[AsyncReporter[Span]](config.getConfig("brave.tracing"), "sqs-span-reporter").orNull)
 
       reporter.isFailure shouldBe true
     }
@@ -22,9 +22,9 @@ class SQSSpanReporterConfiguratorSpec extends FunSpec with Matchers {
     it("should create SQS span reporter from default config") {
       val config = ConfigFactory.load("sqs-reporter.conf")
 
-      val reporter = Configurator[AsyncReporter[Span]](config.getConfig("brave.tracing"), "sqs-span-reporter", _ => null)
+      val reporter = Configurator[AsyncReporter[Span]](config.getConfig("brave.tracing"), "sqs-span-reporter")
 
-      reporter shouldNot be(null)
+      reporter.isDefined shouldBe true
     }
 
   }

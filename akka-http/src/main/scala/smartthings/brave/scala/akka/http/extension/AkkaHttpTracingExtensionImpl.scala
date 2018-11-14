@@ -23,8 +23,6 @@ class AkkaHttpTracingExtensionImpl(config: Config, httpTracingSupplier: Supplier
 
   lazy val httpTracing: HttpTracing = httpTracingSupplier.get().getOrElse {
 
-      println("lazy http tracing create from config")
-
       val tracing = TracingConfigurator(config.getConfig("brave.tracing"))
 
       // TODO read configuration

@@ -7,22 +7,21 @@ import brave.http.HttpServerAdapter
 class AkkaHttpServerAdapter extends HttpServerAdapter[HttpRequest, (HttpRequest, HttpResponse)] {
   override def method(request: HttpRequest): String = request.method.value
 
+  // scalastyle:off null
   override def methodFromResponse(response: (HttpRequest, HttpResponse)): String = response match {
     case (req, _) if req != null => req.method.value
     case _ => null
   }
+  // scalastyle:on null
 
   // TODO is there a good way to return a template route for span names?
   override def route(response: (HttpRequest, HttpResponse)): String = super.route(response)
 
-  override def path(request: HttpRequest): String = {
+  override def path(request: HttpRequest): String =
     request.uri.path.toString()
-  }
 
-  override def url(request: HttpRequest): String = {
-    println(request.uri.toString())
+  override def url(request: HttpRequest): String =
     request.uri.toString()
-  }
 
   override def requestHeader(request: HttpRequest, name: String): String = {
     val lower = name.toLowerCase

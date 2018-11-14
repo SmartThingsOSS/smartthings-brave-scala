@@ -70,13 +70,14 @@ class TracedHttpExt(httpExt: HttpExt, httpTracing: HttpTracing) {
     span.remoteIpAndPort(remoteAddress, request.uri.authority.port)
 
     try {
+      // scalastyle:off null
       future(requestWithHeaders).andThen {
         case Success(response) =>
           clientHandler.handleReceive(response, null, span)
         case Failure(exception) =>
-          println(s"failure ${exception.getMessage}")
           clientHandler.handleReceive(null, exception, span)
       }(singleThreadExecutor)
+      // scalastyle:on null
     } catch {
       case NonFatal(t) =>
         span.error(t).finish()

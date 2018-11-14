@@ -12,7 +12,7 @@ class SpanReporterConfiguratorSpec extends FunSpec with Matchers {
     it("should create console reporter") {
       val config = ConfigFactory.load("base-span-reporters.conf")
 
-      val reporter = Configurator[Reporter[Span]](config.getConfig("brave.tracing"), "console-test", _ => null)
+      val reporter = Configurator[Reporter[Span]](config.getConfig("brave.tracing"), "console-test").orNull
 
       reporter shouldBe Reporter.CONSOLE
     }
@@ -20,7 +20,7 @@ class SpanReporterConfiguratorSpec extends FunSpec with Matchers {
     it("should create noop reporter") {
       val config = ConfigFactory.load("base-span-reporters.conf")
 
-      val reporter = Configurator[Reporter[Span]](config.getConfig("brave.tracing"), "noop-test", _ => null)
+      val reporter = Configurator[Reporter[Span]](config.getConfig("brave.tracing"), "noop-test").orNull
 
       reporter shouldBe Reporter.NOOP
     }
