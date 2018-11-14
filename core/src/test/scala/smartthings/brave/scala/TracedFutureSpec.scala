@@ -2,6 +2,7 @@ package smartthings.brave.scala
 
 import java.util.concurrent.ForkJoinPool
 
+import brave.{Tracer, Tracing}
 import brave.sampler.Sampler
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 
@@ -12,14 +13,14 @@ class TracedFutureSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   val fixture = LeakDetectingFixture()
 
-  val tracing = fixture
+  private val tracing = fixture
     .newTracingBuilder(Sampler.ALWAYS_SAMPLE)
     .build()
 
-  val executorService = tracing.currentTraceContext().executorService(new ForkJoinPool())
-
-  implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
-  implicit val tracer = tracing.tracer()
+  implicit val executionContext: ExecutionContext =
+    ExecutionContexts.fromDefaultExecutorService(tracing.currentTraceContext())
+  
+  implicit val tracer: Tracer = tracing.tracer()
 
   after {
     fixture.clear()
