@@ -12,7 +12,7 @@ class AWSCredentialsProviderConfiguratorSpec extends FunSpec with Matchers {
     it("should create a DefaultAWSCredentialsProviderChain when missing static credentials") {
       val config = ConfigFactory.load("aws-credentials.conf").getConfig("credentials")
 
-      val provider = Configurator[AWSCredentialsProvider](config, "default-credentials", _ => DefaultAWSCredentialsProviderChain.getInstance())
+      val provider = Configurator[AWSCredentialsProvider](config, "default-credentials").getOrElse(DefaultAWSCredentialsProviderChain.getInstance())
 
       provider.isInstanceOf[DefaultAWSCredentialsProviderChain] shouldBe true
     }
@@ -21,7 +21,7 @@ class AWSCredentialsProviderConfiguratorSpec extends FunSpec with Matchers {
 
       val config = ConfigFactory.load("aws-credentials.conf").getConfig("credentials")
 
-      val provider = Configurator[AWSCredentialsProvider](config, "static-credentials", _ => DefaultAWSCredentialsProviderChain.getInstance())
+      val provider = Configurator[AWSCredentialsProvider](config, "static-credentials").getOrElse(DefaultAWSCredentialsProviderChain.getInstance())
 
       provider.getCredentials.getAWSAccessKeyId shouldBe "test"
       provider.getCredentials.getAWSSecretKey shouldBe "test"
@@ -31,7 +31,7 @@ class AWSCredentialsProviderConfiguratorSpec extends FunSpec with Matchers {
     it("should create an STS provider when a role arn is set") {
       val config = ConfigFactory.load("aws-credentials.conf").getConfig("credentials")
 
-      val provider = Configurator[AWSCredentialsProvider](config, "sts-credentials", _ => DefaultAWSCredentialsProviderChain.getInstance())
+      val provider = Configurator[AWSCredentialsProvider](config, "sts-credentials").getOrElse(DefaultAWSCredentialsProviderChain.getInstance())
 
       provider.isInstanceOf[STSProfileCredentialsServiceProvider] shouldBe true
     }

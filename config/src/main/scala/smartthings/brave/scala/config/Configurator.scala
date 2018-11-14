@@ -4,27 +4,28 @@ import com.typesafe.config.Config
 
 object Configurator {
 
-  def apply[T](config: Config, key: String, default: Config => T): T = {
-    getInstance(config, key, default)
+  def apply[T](config: Config, key: String): Option[T] = {
+    getInstance(config, key)
   }
 
-  private def getInstance[T](config: Config, key: String, default: Config => T): T = {
+  private def getInstance[T](config: Config, key: String): Option[T] = {
     if (config.hasPath(key)) {
       val configSection = config.getConfig(key)
       val kind = configSection.getString("type")
       if (kind == null || kind == "" || kind == "default") {
-        default(configSection)
+        None
+//        default(configSection)
       } else if (config.hasPath(kind)) {
-        getInstance(config, kind, default)
+        getInstance(config, kind)
       } else {
-        Class.forName(kind)
+        Option(Class.forName(kind)
           .getConstructor()
           .newInstance()
           .asInstanceOf[Configurator[T]]
-          .configure(configSection)
+          .configure(configSection))
       }
     } else {
-      default(config)
+      None
     }
   }
 

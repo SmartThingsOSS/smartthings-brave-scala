@@ -17,7 +17,7 @@ class AWSCredentialsProviderConfigurator[C >: AWSCredentialsProvider] extends Co
           basicProvider,
           new EnvironmentVariableCredentialsProvider,
           new SystemPropertiesCredentialsProvider,
-          new ProfileCredentialsProvider(Try(config.getString("profile")).getOrElse(null)),
+          new ProfileCredentialsProvider(Try(config.getString("profile")).toOption.orNull),
           new EC2ContainerCredentialsProviderWrapper)
       }
     }

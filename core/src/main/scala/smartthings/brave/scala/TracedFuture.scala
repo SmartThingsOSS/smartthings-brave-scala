@@ -28,7 +28,7 @@ object TracedFuture {
     * @param value
     * @param tracer
     */
-  private [brave] class FutureSpanInScope(value: Span, tracer: Tracer) extends Closeable {
+  private[brave] class FutureSpanInScope(value: Span, tracer: Tracer) extends Closeable {
 
     private var ws: SpanInScope = _
 
@@ -38,8 +38,8 @@ object TracedFuture {
     }
 
     def close(): Unit = {
-      value.finish()
       if (ws != null) ws.close()
+      value.finish()
     }
   }
 
@@ -48,12 +48,12 @@ object TracedFuture {
     val futureInScope = new FutureSpanInScope(span, tracer)
     Future {
       body(futureInScope.markInScope())
-    }(singleThreadExecutor).andThen {
+    }.andThen {
       case Success(_) => futureInScope.close()
       case Failure(exception) =>
         span.tag("error", exception.getLocalizedMessage)
         futureInScope.close()
-    }
+    }(singleThreadExecutor)
   }
 
 
@@ -62,12 +62,12 @@ object TracedFuture {
     val futureInScope = new FutureSpanInScope(span, tracer)
     Future {
       body(futureInScope.markInScope())
-    }(singleThreadExecutor).andThen {
+    }.andThen {
       case Success(_) => futureInScope.close()
       case Failure(exception) =>
         span.tag("error", exception.getLocalizedMessage)
         futureInScope.close()
-    }
+    }(singleThreadExecutor)
   }
 
 }

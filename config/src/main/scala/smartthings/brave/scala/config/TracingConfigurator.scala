@@ -35,16 +35,16 @@ object TracingConfigurator extends TracingConfigurator {
     val localIp = Try(config.getString("local-ip")).getOrElse(Platform.get().linkLocalIp())
     val localPort = Try(config.getInt("local-port")).getOrElse(0)
     Tracing.newBuilder()
-      .clock(Configurator(config, "clock", _ => Platform.get().clock()))
+      .clock(Configurator(config, "clock").getOrElse(Platform.get().clock()))
       .currentTraceContext(CurrentTraceContext.Default.create())
       .supportsJoin(Try(config.getBoolean("supports-join")).getOrElse(true))
       .localServiceName(localServiceName)
       .localIp(localIp)
       .localPort(localPort)
       .traceId128Bit(Try(config.getBoolean("trace-id-128-bit")).getOrElse(false))
-      .sampler(Configurator(config, "sampler", _ => Sampler.ALWAYS_SAMPLE))
-      .spanReporter(Configurator(config, "span-reporter", _ => Reporter.CONSOLE))
-      .errorParser(Configurator(config, "error-parser", _ => new ErrorParser))
+      .sampler(Configurator(config, "sampler").getOrElse(Sampler.ALWAYS_SAMPLE))
+      .spanReporter(Configurator(config, "span-reporter").getOrElse(Reporter.CONSOLE))
+      .errorParser(Configurator(config, "error-parser").getOrElse(ErrorParser.NOOP))
   }
 
 }
