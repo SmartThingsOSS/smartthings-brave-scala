@@ -10,7 +10,8 @@ import brave.http.{HttpClientHandler, HttpServerHandler, HttpTracing}
 import brave.propagation.TraceContext.{Extractor, Injector}
 import smartthings.brave.scala.akka.http.internal.{AkkaHttpClientAdapter, AkkaHttpServerAdapter, TracedFlow}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 
@@ -20,19 +21,11 @@ object TracedHttpExt {
     implicit def httpExtToTracedHttpExt(httpExt: HttpExt)(implicit httpTracing: HttpTracing): TracedHttpExt = new TracedHttpExt(httpExt, httpTracing)
   }
 
-  private[brave] object singleThreadExecutor extends ExecutionContext {
-    override def execute(runnable: Runnable): Unit = runnable.run()
-
-    override def reportFailure(t: Throwable): Unit = {
-      throw new IllegalStateException("exception in sameThreadExecutionContext", t)
-    }
-  }
-
 }
 
 class TracedHttpExt(httpExt: HttpExt, httpTracing: HttpTracing) {
 
-  import TracedHttpExt.singleThreadExecutor
+  import smartthings.brave.scala.TracedFuture.singleThreadExecutor
 
   private val clientHandler = HttpClientHandler.create(httpTracing, new AkkaHttpClientAdapter)
 
@@ -61,22 +54,33 @@ class TracedHttpExt(httpExt: HttpExt, httpTracing: HttpTracing) {
     httpExt.bindAndHandle(TracedFlow(handler, httpTracing, serverHandler, extractor), interface, port)(fm)
   }
 
-  private def transformClientRequest(request: HttpRequest)(f: HttpRequest => Future[HttpResponse]): Future[HttpResponse] = {
-    val span = clientHandler.handleSend(injector, request.headers.toBuffer, request)
+  private def transformClientRequest(request: HttpRequest)(future: HttpRequest => Future[HttpResponse]): Future[HttpResponse] = {
 
-    val ws = httpTracing.tracing().tracer().withSpanInScope(span)
+    val carrier = request.headers.toBuffer
+    val span = clientHandler
+      .handleSend(injector, carrier, request)
+
+    val requestWithHeaders = request.withHeaders(carrier.toList)
+
+    val remoteAddress =
+      request.uri.authority.host.inetAddresses.headOption
+        .map(_.getHostAddress)
+        .getOrElse(request.uri.authority.host.address())
+
+    span.remoteIpAndPort(remoteAddress, request.uri.authority.port)
 
     try {
-      f(request).andThen {
-        case Success(value) => clientHandler.handleReceive(value, null, span)
-        case Failure(exception) => clientHandler.handleReceive(null, exception, span)
+      future(requestWithHeaders).andThen {
+        case Success(response) =>
+          clientHandler.handleReceive(response, null, span)
+        case Failure(exception) =>
+          println(s"failure ${exception.getMessage}")
+          clientHandler.handleReceive(null, exception, span)
       }(singleThreadExecutor)
     } catch {
-      case t: Throwable =>
-        span.error(t)
+      case NonFatal(t) =>
+        span.error(t).finish()
         throw t
-    } finally {
-      ws.close()
     }
   }
 

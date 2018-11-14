@@ -6,7 +6,7 @@ import brave.http.HttpClientAdapter
 class AkkaHttpClientAdapter extends HttpClientAdapter[HttpRequest, HttpResponse] {
   override def method(request: HttpRequest): String = request.method.value
 
-  override def url(request: HttpRequest): String = request.uri.path.toString()
+  override def url(request: HttpRequest): String = request.uri.toString()
 
   override def requestHeader(request: HttpRequest, name: String): String = {
     val lower = name.toLowerCase

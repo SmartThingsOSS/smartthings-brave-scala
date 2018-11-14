@@ -42,8 +42,7 @@ object AkkaHttpExample extends App {
       }
     } ~
     path("client") {
-      tracingNextSpanInScope { (localSpan, spanInScope) =>
-        localSpan.name("around-client").start()
+      tracingNextSpanInScope("around-client") { (localSpan, spanInScope) =>
         complete {
           client(HttpRequest(uri = "http://www.example.com"))
             .andThen {
