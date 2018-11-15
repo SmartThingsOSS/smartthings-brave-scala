@@ -1,0 +1,101 @@
+---
+defaults: &defaults
+  working_directory: ~/project
+  docker:
+    - image: openjdk:8
+  environment:
+    - SBT_VERSION: 1.2.6
+    - SBT_BIN: ~/bin/sbt
+
+version: 2
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sbt-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
+
+      - run:
+          name: "Install Misc Tools"
+          command: |
+            set -x
+            apt update && apt install -y curl
+            mkdir ~/bin
+            curl -Ls https://git.io/sbt > $SBT_BIN && chmod 0755 $SBT_BIN
+            apt-get clean && apt-get autoclean
+
+      - run:
+          name: "Linting Checks"
+          command: $SBT_BIN scalastyle
+
+      - run:
+          name: "Compile"
+          command: $SBT_BIN compile
+
+      - run:
+          name: "Unit Tests"
+          command: $SBT_BIN test
+
+      - run:
+          name: "Package"
+          command: $SBT_BIN package
+
+      - save_cache:
+          key: sbt-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
+          root: ~/
+          paths:
+            - .ivy2/cache
+            - .sbt
+            - .m2
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - bin
+            - .sbt
+            - .ivy2/cache
+            - .m2
+
+  publish_snapshot:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: "Publish Snapshot"
+          command: $SBT_BIN publish
+
+  publish_release:
+    <<: *defaults
+    steps:
+    - attach_workspace:
+        at: ~/
+    - run:
+        name: "Publish Snapshot"
+        command: $SBT_BIN publish
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only: /.*/
+      - publish_snapshot:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+      - publish_release:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v*/
+            branches:
+              ignore: /.*/
