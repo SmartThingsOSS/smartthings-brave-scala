@@ -1,13 +1,11 @@
 
 
-val common = Seq(
+val commonSettings = Seq(
   organization := "com.smartthings.brave.scala",
 
   scalaVersion := "2.12.7",
 
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
-
-  bintrayOrganization := Some("smartthingsoss"),
 
   libraryDependencies ++= Seq(
     "io.zipkin.brave" % "brave" % "5.5.0",
@@ -15,22 +13,41 @@ val common = Seq(
   )
 )
 
+lazy val publishSettings =
+  Seq(
+    homepage := Some(url("https://github.com/smartthingsoss/smartthings-brave-scala")),
+    scmInfo := Some(ScmInfo(url("https://github.com/smartthingsoss/smartthings-brave-scala"),
+      "git@github.com:smartthingsoss/smartthings-brave-scala.git")),
+    developers += Developer("llinder",
+      "Lance Linder",
+      "lance@smartthings.com",
+      url("https://github.com/llinder")),
+    pomIncludeRepository := (_ => false),
+    bintrayOrganization := Some("smartthingsoss"),
+    bintrayPackage := "smartthings-brave-scala"
+  )
+
+lazy val settings = commonSettings ++ publishSettings
+
 lazy val root = project.in(file("."))
   .enablePlugins(GitVersioning, GitBranchPrompt)
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-project",
+    publishArtifact := false,
+    Compile / unmanagedSourceDirectories := Seq.empty,
+    Test / unmanagedSourceDirectories    := Seq.empty,
   )
   .aggregate(core, config, akka, akkaHttp)
 
 lazy val core = project.in(file("core"))
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-core"
   )
 
 lazy val config = project.in(file("config"))
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-config",
     libraryDependencies ++= Seq(
@@ -40,7 +57,7 @@ lazy val config = project.in(file("config"))
   )
 
 lazy val akka = project.in(file("akka"))
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-akka",
     libraryDependencies ++= Seq(
@@ -50,7 +67,7 @@ lazy val akka = project.in(file("akka"))
   .dependsOn(core, config)
 
 lazy val akkaHttp = project.in(file("akka-http"))
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-akka-http",
     libraryDependencies ++= Seq(
@@ -62,7 +79,7 @@ lazy val akkaHttp = project.in(file("akka-http"))
   .dependsOn(core, akka)
 
 lazy val examples = project.in(file("examples"))
-  .settings(common)
+  .settings(settings)
   .settings(
     name := "smartthings-brave-scala-examples"
   )

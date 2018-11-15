@@ -2,7 +2,7 @@
 
 curl --user ${CIRCLE_TOKEN}: \
     --request POST \
-    --form revision=c9f40bfeffe56ca10d43df097582c17dcb888ae7 \
+    --form revision=036328d31efa218559ba6d4418b325c71b05e1da \
     --form config=@config.yml \
     --form notify=false \
-        https://circleci.com/api/v1.1/project/github/llinder/smartthings-brave-scala/tree/master
+        https://circleci.com/api/v1.1/project/github/smartthingsoss/smartthings-brave-scala/tree/master

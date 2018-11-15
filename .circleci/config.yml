@@ -5,7 +5,7 @@ defaults: &defaults
     - image: openjdk:8
   environment:
     - SBT_VERSION: 1.2.6
-    - SBT_BIN: ~/bin/sbt
+    - SBT_BIN: /root/bin/sbt
 
 version: 2
 jobs:
@@ -23,7 +23,7 @@ jobs:
             set -x
             apt update && apt install -y curl
             mkdir ~/bin
-            curl -Ls https://git.io/sbt > $SBT_BIN && chmod 0755 $SBT_BIN
+            curl -Ls https://git.io/sbt > ~/bin/sbt && chmod 0755 ~/bin/sbt
             apt-get clean && apt-get autoclean
 
       - run:
