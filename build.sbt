@@ -2,7 +2,13 @@
 
 val common = Seq(
   organization := "com.smartthings.brave.scala",
+
   scalaVersion := "2.12.7",
+
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+
+  bintrayOrganization := Some("smartthingsoss"),
+
   libraryDependencies ++= Seq(
     "io.zipkin.brave" % "brave" % "5.5.0",
     "org.scalatest" %% "scalatest" % "3.0.5" % Test
@@ -10,9 +16,10 @@ val common = Seq(
 )
 
 lazy val root = project.in(file("."))
+  .enablePlugins(GitVersioning, GitBranchPrompt)
   .settings(common)
   .settings(
-    name := "smartthings-brave-scala-project"
+    name := "smartthings-brave-scala-project",
   )
   .aggregate(core, config, akka, akkaHttp)
 
