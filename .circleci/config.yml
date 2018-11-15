@@ -1,6 +1,6 @@
 ---
 defaults: &defaults
-  working_directory: ~/project
+  working_directory: ~/scala-brave
   docker:
     - image: openjdk:8
   environment:
@@ -56,6 +56,7 @@ jobs:
             - .sbt
             - .ivy2/cache
             - .m2
+            - scala-brave
 
   publish_snapshot:
     <<: *defaults
