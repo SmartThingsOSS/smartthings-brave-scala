@@ -30,7 +30,7 @@ lazy val publishSettings =
 lazy val settings = commonSettings ++ publishSettings
 
 lazy val root = project.in(file("."))
-  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .enablePlugins(GitBranchPrompt)
   .settings(settings)
   .settings(
     name := "smartthings-brave-scala-project",

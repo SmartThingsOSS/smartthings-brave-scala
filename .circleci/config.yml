@@ -40,7 +40,12 @@ jobs:
 
       - run:
           name: "Package"
-          command: $SBT_BIN package
+          command: |
+            set -x
+            export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
+            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+            [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
+            $SBT_BIN "set version := \"$VERSION\"" package
 
       - save_cache:
           key: sbt-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
@@ -65,7 +70,11 @@ jobs:
           at: ~/
       - run:
           name: "Publish Snapshot"
-          command: $SBT_BIN publish
+          command: |
+            export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
+            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+            [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
+            $SBT_BIN "set version := \"$VERSION\"" publish
 
   publish_release:
     <<: *defaults
@@ -73,8 +82,12 @@ jobs:
     - attach_workspace:
         at: ~/
     - run:
-        name: "Publish Snapshot"
-        command: $SBT_BIN publish
+        name: "Publish Release"
+        command: |
+          export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
+          export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+          [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
+          $SBT_BIN "set version := \"$VERSION\"" publish
 
 workflows:
   version: 2
