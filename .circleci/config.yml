@@ -15,7 +15,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - sbt-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
+            - sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
 
       - run:
           name: "Install Misc Tools"
@@ -48,7 +48,7 @@ jobs:
             $SBT_BIN "set ThisBuild / version := \"$VERSION\"" package
 
       - save_cache:
-          key: sbt-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
+          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/plugins.sbt" }}-{{ checksum "project/build.properties" }}
           root: ~/
           paths:
             - .ivy2/cache
