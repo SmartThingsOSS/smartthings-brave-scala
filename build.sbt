@@ -35,6 +35,7 @@ lazy val root = project.in(file("."))
   .settings(
     name := "smartthings-brave-scala-project",
     publishArtifact := false,
+    bintrayRelease := false,
     Compile / unmanagedSourceDirectories := Seq.empty,
     Test / unmanagedSourceDirectories    := Seq.empty,
   )
