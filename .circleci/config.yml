@@ -43,7 +43,7 @@ jobs:
           command: |
             set -x
             export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
-            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)-SNAPSHOT
             [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
             $SBT_BIN "set ThisBuild / version := \"$VERSION\"" package
 
@@ -72,7 +72,7 @@ jobs:
           name: "Publish Snapshot"
           command: |
             export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
-            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+            export VERSION=$(echo $CIRCLE_SHA1 | tr / _)-SNAPSHOT
             [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
             $SBT_BIN "set ThisBuild / version := \"$VERSION\"" publish
 
@@ -85,7 +85,7 @@ jobs:
         name: "Publish Release"
         command: |
           export SEMVER=$(echo "$CIRCLE_TAG" | grep "^v.*$" | cut -c 2-)
-          export VERSION=$(echo $CIRCLE_SHA1 | tr / _)
+          export VERSION=$(echo $CIRCLE_SHA1 | tr / _)-SNAPSHOT
           [ -n "$SEMVER" ] && export VERSION=$(echo $SEMVER | tr / _)
           $SBT_BIN "set ThisBuild / version := \"$VERSION\"" publish
 
