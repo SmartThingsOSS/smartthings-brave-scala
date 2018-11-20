@@ -3,9 +3,10 @@ package smartthings.brave.scala.akka.http.extension
 import java.util.function.Supplier
 
 import akka.actor.{ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider}
-import brave.http.{HttpSampler, HttpTracing}
+import brave.http.HttpTracing
 import com.typesafe.config.Config
 import smartthings.brave.scala.config.TracingConfigurator
+import smartthings.brave.scala.config.http.HttpTracingConfigurator
 
 object AkkaHttpTracingExtension extends ExtensionId[AkkaHttpTracingExtensionImpl] with ExtensionIdProvider {
 
@@ -23,16 +24,9 @@ class AkkaHttpTracingExtensionImpl(config: Config, httpTracingSupplier: Supplier
 
   lazy val httpTracing: HttpTracing = httpTracingSupplier.get().getOrElse {
 
-      val tracing = TracingConfigurator(config.getConfig("brave.tracing"))
+    val tracing = TracingConfigurator(config.getConfig("brave.tracing"))
 
-      // TODO read configuration
-      val clientSampler = HttpSampler.TRACE_ID
-      val serverSampler = HttpSampler.TRACE_ID
-
-      HttpTracing.newBuilder(tracing)
-        .clientSampler(clientSampler)
-        .serverSampler(serverSampler)
-        .build()
-    }
+    HttpTracingConfigurator(config.getConfig("brave.tracing.http"), tracing)
+  }
 
 }
