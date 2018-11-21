@@ -1,6 +1,6 @@
 package smartthings.brave.scala.config
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.typesafe.config.Config
 import zipkin2.Span
@@ -11,7 +11,7 @@ import zipkin2.reporter.{AsyncReporter, Reporter}
 class SQSSpanReporterConfigurator extends Configurator[Reporter[Span]] {
   override def configure(config: Config): Reporter[Span] = {
 
-    val credentialsProvider = Configurator(config, "aws-credentials-provider")
+    val credentialsProvider: AWSCredentialsProvider = Configurator(config, "aws-credentials-provider")
       .getOrElse(DefaultAWSCredentialsProviderChain.getInstance())
 
     val sender = for {
